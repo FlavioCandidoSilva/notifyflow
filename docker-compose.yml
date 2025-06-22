@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: notifyflow_app
+    ports:
+      - "8000:8000"
+      - "9003:9003" 
+    volumes:
+      - ./:/var/www
+    depends_on:
+      - mysql
+      - rabbitmq
+    networks:
+      - notifyflow_net
+
+  mysql:
+    image: mysql:8
+    container_name: notifyflow_mysql
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: notifyflow_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - notifyflow_net
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: notifyflow_rabbitmq
+    ports:
+      - "5672:5672"    
+      - "15672:15672"  
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - notifyflow_net
+
+volumes:
+  mysql_data:
+
+networks:
+  notifyflow_net:
