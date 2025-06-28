@@ -6,12 +6,13 @@ services:
     container_name: notifyflow_app
     ports:
       - "8000:8000"
-      - "9003:9003" 
+      - "9003:9003"
     volumes:
       - ./:/var/www
     depends_on:
       - mysql
       - rabbitmq
+      - wppconnect
     networks:
       - notifyflow_net
 
@@ -33,13 +34,23 @@ services:
     image: rabbitmq:3-management
     container_name: notifyflow_rabbitmq
     ports:
-      - "5672:5672"    
-      - "15672:15672"  
+      - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
     networks:
       - notifyflow_net
+
+  wppconnect:
+    image: areesmoon/wppconnect-server:latest
+    container_name: wppconnect_server
+    ports:
+      - "21465:21465"
+    restart: always
+    networks:
+      - notifyflow_net
+
 
 volumes:
   mysql_data:

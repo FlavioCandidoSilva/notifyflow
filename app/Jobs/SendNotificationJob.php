@@ -10,6 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Mockery\Matcher\Not;
 use Illuminate\Support\Facades\Log;
+use App\Services\WhatsAppService;
 
 class SendNotificationJob implements ShouldQueue
 {
@@ -17,12 +18,15 @@ class SendNotificationJob implements ShouldQueue
 
     public Notification $notification;
 
+    public WhatsAppService $whatsAppService;
+
     /**
      * Create a new job instance.
      */
-    public function __construct(Notification $notification)
+    public function __construct(Notification $notification, WhatsAppService $whatsAppService)
     {
         $this->notification = $notification;
+        $this->whatsAppService = $whatsAppService;
     }
 
 
@@ -30,14 +34,20 @@ class SendNotificationJob implements ShouldQueue
     {
         $this->notification->update(['status' => 'processing']);
 
-        Log::info("🔔 Enviando {$this->notification->type} para {$this->notification->recipient}");
+        $teste = $this->whatsAppService->authenticate();
 
-        sleep(2);
+        $result = $this->whatsAppService->sendMessage(
+            '55'. ltrim($this->notification->recipient, '0'),
+            $this->notification->message
+        );
 
-        $this->notification->update(['status' => 'sent']);
-
-        Log::info("✅ {$this->notification->type} enviado com sucesso para {$this->notification->recipient}");
-
+        if ($result === true) {
+            $this->notification->update(['status' => 'sent']);
+            Log::info("✅ WhatsApp enviado para {$this->notification->recipient}");
+        } else {
+            $this->notification->update(['status' => 'failed']);
+            Log::error("❌ Falha WhatsApp para {$this->notification->recipient}: $result");
+        }
     }
 
 }
